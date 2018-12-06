@@ -279,9 +279,8 @@ bool HttpsClient::postData(std::string host, std::string path, std::string post_
 	stream << " HTTP/1.1\r\n";
 	stream << "Host: " << host << "\r\n";	
 	stream << "Connection: keep-alive\r\n";
-	//stream << "Connection:close\r\n";
 	stream << "User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9.2.3) Gecko/20100401 Firefox/3.6.3\r\n";
-	stream << "Content-Type:application/x-www-form-urlencoded\r\n";
+	stream << "Content-Type: application/x-www-form-urlencoded\r\n";
 
 	std::string strCookie;
 	SetCookie(strCookie);
@@ -293,7 +292,7 @@ bool HttpsClient::postData(std::string host, std::string path, std::string post_
 	return socketHttps(host, stream.str());
 }
 
-bool HttpsClient::getData2(std::string host, std::string pathAndparameter)
+bool HttpsClient::getData(std::string host, std::string pathAndparameter)
 {
 	//GET请求方式
 	std::stringstream stream;
@@ -301,7 +300,6 @@ bool HttpsClient::getData2(std::string host, std::string pathAndparameter)
 	stream << " HTTP/1.1\r\n";
 	stream << "Host: " << host << "\r\n";	
 	stream << "Connection: keep-alive\r\n";
-	//stream << "Connection:close\r\n"; // 这个不能省略
 	stream << "User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9.2.3) Gecko/20100401 Firefox/3.6.3\r\n";
 	//stream << "Referer: https ://account.xiaomi.com/pass/serviceLogin\r\n";
 	stream << "Accept-Language: zh-CN,zh;q=0.9\r\n";
@@ -313,10 +311,10 @@ bool HttpsClient::getData2(std::string host, std::string pathAndparameter)
 	return socketHttps(host, stream.str());
 }
 
-bool HttpsClient::getData(std::string host, std::string path, std::string get_content)
+bool HttpsClient::getDataWithParam(std::string host, std::string path, std::string get_content)
 {
 	std::string strPath = path + "?" + get_content;
-	return getData2(host,strPath);
+	return getData(host,strPath);
 }
 
 // 获取请求的结果
@@ -362,11 +360,10 @@ bool HttpsClient::ExtractCookie()
 				if (it != m_vCookie.end())
 					m_vCookie.erase(it);
 			}
-			else// if (name != "JSESSIONID")
+			else
 			{
 				m_vCookie[name] = value;
-			}
-				
+			}	
 		}
 		else  // session 类型的cookie
 		{

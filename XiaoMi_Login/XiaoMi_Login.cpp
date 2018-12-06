@@ -10,7 +10,7 @@
 #include "UrlCode.h"
 #include "jsoncpp/json.h"
 
-struct JSP_VER
+struct JSP_VAR
 {
 	//std::string deviceType;
 	//std::string dataCenter;
@@ -23,7 +23,7 @@ struct JSP_VER
 	std::string serviveParam;
 	//std::string loginMethods;
 	std::string captCode; // 验证码
-	JSP_VER()
+	JSP_VAR()
 	{
 		//this->deviceType = "PC";
 		//this->dataCenter = "c3";
@@ -41,8 +41,8 @@ const char* g_Url = "https://account.xiaomi.com/";
 const char* g_username = NULL;
 const char* g_userpass = NULL;
 
-void Init_JSP_VER(std::string &strResult, JSP_VER &jspver);
-bool GetVerificationCode(HttpsClient &client, JSP_VER &jspver);
+void Init_JSP_VAR(std::string &strResult, JSP_VAR &jspver);
+bool GetVerificationCode(HttpsClient &client, JSP_VAR &jspver);
 
 // 定义64位整形
 #if defined(_WIN32) && !defined(CYGWIN)
@@ -88,7 +88,7 @@ int GetInitCookie(HttpsClient &client);
 
 bool PraseLoginJson(HttpsClient &client, std::wstring& wDesc);
 
-bool DoLogin(JSP_VER &jspver, std::string strMd5, HttpsClient &client);
+bool DoLogin(JSP_VAR &jspver, std::string strMd5, HttpsClient &client);
 
 void InputPassWord(std::string& strMd5);
 
@@ -102,12 +102,33 @@ int main(int argc, char* argv)
 	if (client.ConnectToServer("account.xiaomi.com", 443) == false)
 		return -1;
 
+
 	if (GetInitCookie(client) < 0)
 		return -2;
 
-	JSP_VER jspver;
+	client.m_vCookie["cUserId"] = "5eGseiKr_r62U07tXY4ARUMMuPg";
+	client.m_vCookie["deviceId"] = "wb_96142f3e-4ed7-4480-b787-1f54a9e7f612";
+	client.m_vCookie["userName"] = "qni***com";
+	client.m_vCookie["pass_trace"] = "9zJ2DuOyVavNoAv4726aF0g8ZW11v2sHXClSdGY264SnjYbEbWl7TZeCiSnGkI6/H50w0uvpr00oAlSxOUvO0kMG1YcRSryQWQw6BI+QkjQMB8F7A41fL4HRzQVuZHwl";
+
+	client.m_vCookie["pass_ua"] = "web";
+
+
+	if (client.getDataWithParam("account.xiaomi.com", "/pass/serviceLogin"))
+	{
+		std::string str = client.GetLastRequestResult();
+		const char* pData = str.c_str();
+		int  n = 0;
+	}
+
+	JSP_VAR jspver;
 	std::string strResult = client.GetLastRequestResult();
-	Init_JSP_VER(strResult, jspver);
+	Init_JSP_VAR(strResult, jspver);
+	if (jspver.sid.empty() || jspver._sign.empty())
+	{
+		MessageBox(NULL, _T("该版本已经失败"), _T("提示"), MB_OK);
+		exit(0);
+	}
 	GetVerificationCode(client, jspver);
 
 	std::string strMd5;
@@ -157,7 +178,7 @@ int main(int argc, char* argv)
 	return 0;
 }
 
-void Init_JSP_VER(std::string &strResult, JSP_VER &jspver)
+void Init_JSP_VAR(std::string &strResult, JSP_VAR &jspver)
 {
 	const char* pData = strResult.c_str();
 	char* pFlag1 = "var JSP_VAR=";
@@ -168,7 +189,10 @@ void Init_JSP_VER(std::string &strResult, JSP_VER &jspver)
 	do
 	{
 		if (nPosStart == std::string::npos || nPosEnd == std::string::npos)
+		{
 			break;
+		}
+			
 		std::string strJSP_VAR;
 		strJSP_VAR.append(pData + nPosStart + strlen(pFlag1), nPosEnd - nPosStart - strlen(pFlag1) - 1);
 
@@ -221,7 +245,7 @@ void Init_JSP_VER(std::string &strResult, JSP_VER &jspver)
 	} while (0);
 }
 
-bool GetVerificationCode(HttpsClient &client, JSP_VER &jspver)
+bool GetVerificationCode(HttpsClient &client, JSP_VAR &jspver)
 {
 	__int64 dwTime = GetSysTimeMicros() / 1000;
 	char szNum[14] = { 0 };
@@ -229,7 +253,7 @@ bool GetVerificationCode(HttpsClient &client, JSP_VER &jspver)
 	std::string getCode = "/pass/getCode?icodeType=login&";
 	getCode.append(szNum);
 
-	if (client.getData2("account.xiaomi.com", getCode))
+	if (client.getData("account.xiaomi.com", getCode))
 	{
 		std::string strResult = client.GetLastRequestResult();
 		int nLen = strResult.length();
@@ -270,7 +294,7 @@ void GetMoveUrl(HttpsClient &client, std::string &strMove)
 
 int GetInitCookie(HttpsClient &client)
 {
-	if (client.getData("account.xiaomi.com", "/pass/auth/security/home") == false)
+	if (client.getDataWithParam("account.xiaomi.com", "/pass/auth/security/home") == false)
 		return -2;
 	std::string strMove;
 	GetMoveUrl(client, strMove);
@@ -282,7 +306,7 @@ int GetInitCookie(HttpsClient &client)
 		strPath.append(strMove.c_str() + nLen - 1, strMove.length() - nLen + 1);
 	}
 
-	if (client.getData2("account.xiaomi.com", strPath) == false)
+	if (client.getData("account.xiaomi.com", strPath) == false)
 		return -3;
 }
 
@@ -356,7 +380,7 @@ bool PraseLoginJson(HttpsClient &client, std::wstring& wDesc)
 	return true;
 }
 
-bool DoLogin(JSP_VER &jspver, std::string strMd5, HttpsClient &client)
+bool DoLogin(JSP_VAR &jspver, std::string strMd5, HttpsClient &client)
 {
 	std::string strPostData;
 	strPostData.append("_json=true");

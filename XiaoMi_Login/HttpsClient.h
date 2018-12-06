@@ -100,8 +100,8 @@ public:
 
 	bool postData(std::string host, std::string path, std::string post_content = "");
 
-	bool getData2(std::string host, std::string pathAndparameter);
-	bool getData(std::string host, std::string path, std::string get_content = "");
+	bool getData(std::string host, std::string pathAndparameter);
+	bool getDataWithParam(std::string host, std::string path, std::string get_content = "");
 
 	void SetCookie(std::string &strCookie);
 
